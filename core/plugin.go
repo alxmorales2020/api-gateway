@@ -1,7 +1,9 @@
 package core
 
+import "net/http"
+
 type Plugin interface {
-    Init(config map[string]interface{}) error
-    Handle(ctx *RequestContext) error
-    Name() string
+	Name() string
+	Init(config map[string]interface{}) error
+	Execute(http.ResponseWriter, *http.Request) error
 }

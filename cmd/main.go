@@ -1,17 +1,21 @@
 package main
 
 import (
-    "log"
-    "net/http"
-    "github.com/go-chi/chi/v5"
+	"log"
+	"net/http"
+
+	"github.com/alxmorales2020/api-gateway/config"
+	"github.com/alxmorales2020/api-gateway/router"
 )
 
 func main() {
-    r := chi.NewRouter()
-    r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-        w.Write([]byte("pong"))
-    })
+	configFile, err := config.LoadConfig("config.yaml")
+	if err != nil {
+		log.Fatalf("Error loading configuration: %v", err)
+	}
 
-    log.Println("Gateway listening on :8080")
-    http.ListenAndServe(":8080", r)
+	router := router.NewRouter(configFile)
+
+	log.Println("Starting API Gateway on :8080")
+	http.ListenAndServe(":8080", router)
 }
