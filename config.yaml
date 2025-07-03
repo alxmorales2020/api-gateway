@@ -1,0 +1,16 @@
+routes:
+  - method: GET
+    path: /hello
+    upstream: https://httpbin.org
+    plugins:
+      - logging
+  - method: POST
+    path: /submit
+    upstream: http://form-service
+    plugins:
+      - jwt-auth
+
+plugins:
+  - logging
+  - jwt-auth
+
