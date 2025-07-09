@@ -50,9 +50,7 @@ Or manually:
 ```bash
 go run ./cmd/main.go
 ```
-
-
-⸻
+---
 
 🧪 Test It
 
@@ -69,8 +67,7 @@ Call it with:
 ```bash
 curl http://localhost:8080/hello/get
 ```
-
-⸻
+---
 
 🔌 Plugins
 
@@ -82,7 +79,7 @@ Example Plugins:
 
 You can add your own by implementing the Plugin interface.
 
-⸻
+---
 
 🛠️ Development
 
@@ -115,7 +112,7 @@ make docker-build
 
 Contributions welcome! Submit issues, PRs, or plugin ideas. Let’s build an open-source gateway devs love.
 
-⸻
+---
 
 📄 License
 
