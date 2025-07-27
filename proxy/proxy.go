@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 )
 
-func NewReverseProxy(target string) (*httputil.ReverseProxy, error) {
+func NewReverseProxy(target string, stripPrefix string) (*httputil.ReverseProxy, error) {
 	// Parse the target URL
 	targetURL, err := url.Parse(target)
 	if err != nil {
@@ -23,6 +24,12 @@ func NewReverseProxy(target string) (*httputil.ReverseProxy, error) {
 		originalDirector(req)
 
 		req.Host = targetURL.Host
+		if stripPrefix != "" && strings.HasPrefix(req.URL.Path, stripPrefix) {
+			req.URL.Path = strings.TrimPrefix(req.URL.Path, stripPrefix)
+			if req.URL.Path == "" {
+				req.URL.Path = "/"
+			}
+		}
 	}
 
 	proxy.ErrorHandler = func(writer http.ResponseWriter, request *http.Request, err error) {

@@ -1,15 +1,50 @@
+# API Gateway Configuration
+# This file defines the routes, plugins, and persistence settings for the API Gateway.
+
+# Persistence settings
+# Here we define how the API Gateway will store its configuration and state.
+# In this case, we are using MongoDB as the persistence layer.
+# The URI, database, and collection are specified for connecting to the MongoDB instance.
+# Ensure that the MongoDB service is running and accessible at the specified URI.
+# The database and collection names should be created beforehand or will be created automatically.
+# The API Gateway will use this MongoDB instance to store and retrieve route configurations.
+# Make sure to adjust the URI, database, and collection names as per your environment.
+# If persistence is omitted, the API Gateway will not store any state and will only use the routes in the config.yaml.
+persistence:
+  mongodb:
+    uri: mongodb://localhost:27017
+    database: apigateway # optional, defaults to 'apigateway'
+    collection: routes # optional, defaults to 'routes'
+    username: admin # optional, if authentication is enabled
+    password: secret # optional, if authentication is enabled
+
+
+# Route configurations
+# This section defines the routes that the API Gateway will handle.
+# Each route specifies the path, HTTP methods, upstream service, and any plugins to apply.
+# The path can include wildcards (e.g., /hello*) to match multiple endpoints.
+# The upstream service is the destination where the request will be forwarded.
+# Plugins can be applied to each route for additional functionality, such as logging or authentication.
+# The `strip_prefix` option indicates whether to remove the route prefix when forwarding the request to the upstream service.
+# If `strip_prefix` is true, the path prefix will be removed before forwarding.
 routes:
-  - method: GET
-    path: /hello
+  - path: /hello*
+    methods: [GET,POST]
     upstream: https://httpbin.org
+    strip_prefix: true
     plugins:
       - logging
-  - method: POST
+  - methods: [POST]
     path: /submit
     upstream: http://form-service
     plugins:
       - jwt-auth
 
+# Plugin configurations
+# This section lists the plugins that are available for use in the API Gateway.
+# Each plugin can be applied to routes to enhance functionality.
+# The plugins listed here are logging and JWT authentication.
+# The logging plugin will log requests and responses, while the jwt-auth plugin will handle JWT authentication
 plugins:
   - logging
   - jwt-auth

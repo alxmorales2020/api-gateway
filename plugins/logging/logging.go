@@ -22,19 +22,24 @@ func (plugin *LoggingPlugin) Init(config map[string]interface{}) error {
 }
 
 func (plugin *LoggingPlugin) Execute(writer http.ResponseWriter, request *http.Request) error {
+	recorder, ok := writer.(*core.ResponseRecorder)
+	if !ok {
+		fmt.Println("WARNING: ResponseWriter not wrapped")
+		return nil
+	}
+
 	startTime := time.Now()
 
-	// Log the incoming request details
-	fmt.Printf("Received %s request for %s\n", request.Method, request.URL.Path)
-
-	// Call the next handler in the chain (if any)
-	// Here we just simulate a response for demonstration purposes
-	writer.WriteHeader(http.StatusOK)
-	writer.Write([]byte("Request processed"))
-
-	// Log the response details
-	duration := time.Since(startTime)
-	fmt.Printf("Processed %s request for %s in %v\n", request.Method, request.URL.Path, duration)
+	defer func() {
+		duration := time.Since(startTime)
+		fmt.Printf("[%s] %s %d %dB %v\n",
+			request.Method,
+			request.URL.Path,
+			recorder.StatusCode,
+			recorder.Bytes,
+			duration,
+		)
+	}()
 
 	return nil
 }
