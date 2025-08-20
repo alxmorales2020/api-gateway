@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 // YAMLRouteStore implements RouteStore using in-memory route definitions loaded from config.yaml.
@@ -22,26 +24,30 @@ func NewYAMLRouteStore(routes []RouteConfig) *YAMLRouteStore {
 func (s *YAMLRouteStore) LoadRoutes() ([]RouteConfig, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.routes, nil
+	out := make([]RouteConfig, len(s.routes))
+	copy(out, s.routes)
+	return out, nil
 }
 
 // SaveRoute appends a new route to the in-memory list.
-func (s *YAMLRouteStore) SaveRoute(route RouteConfig) error {
+func (s *YAMLRouteStore) SaveRoute(route *RouteConfig) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Optional: validate or deduplicate route before adding
-	s.routes = append(s.routes, route)
+	if route.ID == "" {
+		route.ID = uuid.NewString()
+	}
+	s.routes = append(s.routes, *route)
 	return nil
 }
 
-// DeleteRoute removes a route by exact path match.
-func (s *YAMLRouteStore) DeleteRoute(path string) error {
+// DeleteRoute removes a route by its ID.
+func (s *YAMLRouteStore) DeleteRoute(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	for i, r := range s.routes {
-		if r.Path == path {
+		if r.ID == id {
 			s.routes = append(s.routes[:i], s.routes[i+1:]...)
 			return nil
 		}

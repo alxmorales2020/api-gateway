@@ -1,11 +1,12 @@
 package config
 
 type RouteConfig struct {
-	Path        string   `yaml:"path" bson:"path"`
-	Methods     []string `yaml:"methods" bson:"methods"`
-	Upstream    string   `yaml:"upstream" bson:"upstream"`
-	StripPrefix bool     `yaml:"strip_prefix,omitempty" bson:"strip_prefix,omitempty"`
-	Plugins     []string `yaml:"plugins,omitempty" bson:"plugins,omitempty"`
+	ID          string   `json:"id,omitempty"			bson:"_id,omitempty"			yaml:"-"` // controlled string id
+	Path        string   `json:"path"        			bson:"path"        				yaml:"path"`
+	Methods     []string `json:"methods"     			bson:"methods"     				yaml:"methods"`
+	Upstream    string   `json:"upstream"    			bson:"upstream"    				yaml:"upstream"`
+	StripPrefix bool     `json:"strip_prefix,omitempty" bson:"strip_prefix,omitempty" 	yaml:"strip_prefix,omitempty"`
+	Plugins     []string `json:"plugins,omitempty"   	bson:"plugins,omitempty"      	yaml:"plugins,omitempty"`
 }
 
 type GatewayConfig struct {

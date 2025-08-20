@@ -3,9 +3,12 @@ package config
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -80,25 +83,48 @@ func (m *MongoRouteStore) LoadRoutes() ([]RouteConfig, error) {
 }
 
 // SaveRoute inserts a new route into MongoDB
-func (m *MongoRouteStore) SaveRoute(route RouteConfig) error {
+func (m *MongoRouteStore) SaveRoute(route *RouteConfig) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	if route.ID == "" {
+		route.ID = uuid.NewString()
+	}
 
 	_, err := m.collection.InsertOne(ctx, route)
 	return err
 }
 
-// DeleteRoute removes a route by path
-func (m *MongoRouteStore) DeleteRoute(path string) error {
+// DeleteRoute removes a route by its ID from MongoDB
+func (m *MongoRouteStore) DeleteRoute(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	result, err := m.collection.DeleteOne(ctx, bson.M{"path": path})
-	if err != nil {
+	// Normalize
+	id = strings.TrimSpace(id)
+
+	// 1) Preferred: _id is a string UUID
+	if res, err := m.collection.DeleteOne(ctx, bson.M{"_id": id}); err != nil {
 		return err
+	} else if res.DeletedCount > 0 {
+		return nil
 	}
-	if result.DeletedCount == 0 {
-		return errors.New("route not found")
+
+	// 2) Legacy: separate "id" field (older documents)
+	if res, err := m.collection.DeleteOne(ctx, bson.M{"id": id}); err != nil {
+		return err
+	} else if res.DeletedCount > 0 {
+		return nil
 	}
-	return nil
+
+	// 3) Very old: _id is an ObjectId
+	if oid, err := primitive.ObjectIDFromHex(id); err == nil {
+		if res, err := m.collection.DeleteOne(ctx, bson.M{"_id": oid}); err != nil {
+			return err
+		} else if res.DeletedCount > 0 {
+			return nil
+		}
+	}
+
+	return errors.New("route not found")
 }

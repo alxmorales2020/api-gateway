@@ -39,26 +39,29 @@ func main() {
 		log.Println("Loaded route configuration from config.yaml.")
 	}
 
-	// Load routes from the store
-	routeConfigs, err := store.LoadRoutes()
+	// Hot-reloadable app router
+	manager, err := router.NewManager(store)
 	if err != nil {
-		log.Fatalf("Error loading routes: %v", err)
+		log.Fatalf("router manager: %v", err)
 	}
 
-	// This is your main app router
-	mainRouter := chi.NewRouter()
+	// Top-level router
+	top := chi.NewRouter()
 
-	// Mount main application routes from config
-	mainRouter.Mount("/", router.NewRouter(routeConfigs))
+	// Admin API (gets store and a reloader)
+	adminHandler := admin.NewAdminHandler(store, manager)
+	top.Mount("/admin", adminHandler.Routes())
 
-	// Mount admin API with access to shared config
-	adminHandler := admin.NewAdminHandler(gatewayConfig)
-	mainRouter.Mount("/admin", adminHandler.Routes())
+	top.Mount("/", manager) // app routes served via atomic handler
 
-	// Start server
+	top.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("TOP 404: %s %s", r.Method, r.URL.Path)
+		http.Error(w, "not found", http.StatusNotFound)
+	})
+
 	log.Println("Starting API Gateway on :8080")
-	if err := http.ListenAndServe(":8080", mainRouter); err != nil {
-		log.Fatalf("Server error: %v", err)
+	if err := http.ListenAndServe(":8080", top); err != nil {
+		log.Fatalf("server: %v", err)
 	}
 }
 
